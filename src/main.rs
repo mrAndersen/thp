@@ -1,4 +1,9 @@
-use std::fmt::{Debug, Display, Formatter, Pointer, Write};
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_assignments)]
+
+use std::fmt::{Debug, Display, Formatter, Write};
 use std::fs;
 use crate::parser::Code;
 
@@ -18,7 +23,7 @@ pub struct TVal {
 
 impl Debug for TVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        Debug::fmt(&self, f)
+        Display::fmt(&self, f)
     }
 }
 
@@ -95,4 +100,6 @@ pub struct TArray {
 fn main() {
     let source = String::from_utf8(fs::read("tests/one.thp").unwrap()).unwrap();
     let c = Code::tokenize(source);
+
+    println!("{:?}", c);
 }

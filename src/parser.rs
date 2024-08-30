@@ -1,13 +1,22 @@
+use std::fmt::{Debug, Formatter};
 use std::time;
 use regex::Regex;
 use crate::now;
-use crate::tokens::{Token, TokenArrayClose, TokenArrayOpen, TokenComma, TokenEq, TokenPhpOpenTag, TokenQuote, TokenScalar, TokenSemicolon, TokenType, TokenVar};
+use crate::tokens::{get_tokens, Token, TokenArrayClose, TokenArrayOpen, TokenComma, TokenEq, TokenParClose, TokenParOpen, TokenPhpOpenTag, TokenQuote, TokenScalar, TokenSemicolon, TokenType, TokenVar};
 use time::SystemTime;
+use crate::functions::get_functions;
 
 pub struct Code {
     tokens: Vec<TokenType>,
+    code: Vec<String>,
     current: usize,
     tokenize_time_ms: f64,
+}
+
+impl Debug for Code {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(format!("{:?}\n{}ms {:?}", self.code, self.tokenize_time_ms, self.tokens).as_str())
+    }
 }
 
 impl Code {
@@ -24,7 +33,7 @@ impl Code {
     }
 
     fn split(input: &str) -> Vec<String> {
-        let re = Regex::new(r#"\s+|\n|;|,|'|""#).unwrap();
+        let re = Regex::new(r#"\s+|\n|\(|\)|;|,|'|""#).unwrap();
         let mut result = Vec::new();
         let mut last_end = 0;
 
@@ -50,37 +59,34 @@ impl Code {
     pub fn tokenize(code: String) -> Code {
         let start = now!();
 
-        let mut lang_tokens: Vec<Box<dyn Token>> = vec![
-            Box::new(TokenComma {}),
-            Box::new(TokenEq {}),
-            Box::new(TokenPhpOpenTag {}),
-            Box::new(TokenVar {}),
-            Box::new(TokenSemicolon {}),
-            Box::new(TokenQuote {}),
-            Box::new(TokenArrayOpen {}),
-            Box::new(TokenArrayClose {}),
-            Box::new(TokenScalar {}),
-        ];
-
         let mut result = vec![];
         let mut current = 0;
+        let lang_tokens = get_tokens();
+        let lang_functions = get_functions();
         let tokens: Vec<String> = Self::split(code.as_str());
 
         while current != tokens.len() {
             let token_str = &tokens[current];
             current += 1;
+            let mut token_found = false;
 
             for lang_token in &lang_tokens {
                 if lang_token.is(token_str.as_str()) {
                     result.push(lang_token.process(token_str.as_str(), &tokens));
+                    token_found = true
                 }
+            }
+
+            if !token_found {
+
             }
         }
 
         Code {
             tokens: result,
             current: 0,
-            tokenize_time_ms: now!().duration_since(start).unwrap().as_nanos() as f64 / 1000.0,
+            code: tokens,
+            tokenize_time_ms: now!().duration_since(start).unwrap().as_micros() as f64 / 1000.0,
         }
     }
 }

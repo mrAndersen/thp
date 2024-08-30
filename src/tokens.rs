@@ -1,4 +1,3 @@
-use std::num::{ParseFloatError, ParseIntError};
 use crate::TVal;
 
 pub trait Token {
@@ -20,6 +19,27 @@ pub enum TokenType {
     Scalar(TVal),
     ArrayOpen,
     ArrayClose,
+    ParOpen,
+    ParClose,
+    FunctionCall(String),
+}
+
+pub fn get_tokens() -> Vec<Box<dyn Token>> {
+    let lang_tokens: Vec<Box<dyn Token>> = vec![
+        Box::new(TokenComma {}),
+        Box::new(TokenEq {}),
+        Box::new(TokenPhpOpenTag {}),
+        Box::new(TokenVar {}),
+        Box::new(TokenSemicolon {}),
+        Box::new(TokenQuote {}),
+        Box::new(TokenArrayOpen {}),
+        Box::new(TokenArrayClose {}),
+        Box::new(TokenScalar {}),
+        Box::new(TokenParOpen {}),
+        Box::new(TokenParClose {}),
+    ];
+
+    lang_tokens
 }
 
 pub struct TokenComma {}
@@ -31,6 +51,28 @@ pub struct TokenQuote {}
 pub struct TokenScalar {}
 pub struct TokenArrayOpen {}
 pub struct TokenArrayClose {}
+pub struct TokenParClose {}
+pub struct TokenParOpen {}
+
+impl Token for TokenParClose {
+    fn is(&self, token: &str) -> bool {
+        token == ")"
+    }
+
+    fn process(&self, token: &str, tokens: &Vec<String>) -> TokenType {
+        TokenType::ParClose
+    }
+}
+
+impl Token for TokenParOpen {
+    fn is(&self, token: &str) -> bool {
+        token == "("
+    }
+
+    fn process(&self, token: &str, tokens: &Vec<String>) -> TokenType {
+        TokenType::ParOpen
+    }
+}
 
 impl Token for TokenArrayClose {
     fn is(&self, token: &str) -> bool {
@@ -127,7 +169,6 @@ impl Token for TokenComma {
         TokenType::Comma
     }
 }
-
 
 impl Token for TokenEq {
     fn is(&self, token: &str) -> bool {
